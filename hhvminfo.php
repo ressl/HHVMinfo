@@ -31,8 +31,8 @@ Version: 0.0.2
 	.p {text-align: left;}
 	.e {background-color: #ccccff; font-weight: bold; color: #000; width:300px;}
 	.h {background-color: #9999cc; font-weight: bold; color: #000;}
-         .v {background-color: #ddd; max-width: 300px; overflow-x: auto;}
-         .v i {color: #999;}
+	.v {background-color: #ddd; max-width: 300px; overflow-x: auto;}
+	.v i {color: #999;}
 	.vr {background-color: #cccccc; text-align: right; color: #000; white-space: nowrap;}
 	.b {font-weight:bold;}
 	.white, .white a {color:#fff;} 	
@@ -81,15 +81,15 @@ if ( isset($_GET['INI']) && $ini=ini_get_all() ) {
      			'Entry can be set in php.ini or httpd.conf'=>INI_SYSTEM,'<div style="width:865px">Entry can be set anywhere</div>'=>INI_ALL ));
 }
 
-if ( isset($_GET['EXTENSIONS']) && $extensions=get_loaded_extensions(true)) { 
+if ( isset($_GET['EXTENSIONS']) && $extensions=get_loaded_extensions(true) ) { 
 	echo '<h2 id="extensions">extensions</h2>'; natcasesort($extensions); print_table($extensions,false,true); 
 }
 
-if ( isset($_GET['FUNCTIONS']) && $functions=get_defined_functions()) { 
+if ( isset($_GET['FUNCTIONS']) && $functions=get_defined_functions() ) { 
 	 echo '<h2 id="functions">functions</h2>'; natcasesort($functions['internal']); print_table($functions['internal'],false,true); 
 }
 
-if ( isset($_GET['CONSTANTS']) && $constants=get_defined_constants(true)) { 
+if ( isset($_GET['CONSTANTS']) && $constants=get_defined_constants(true) ) { 
 	ksort($constants); foreach ($constants as $key=>$value) { if (!empty($value)) { ksort($value); echo '<h2>',$key,' Constants</h2>'; print_table($value); } } 
 }
 
@@ -135,7 +135,7 @@ function print_table($array,$headers=false, $formatkeys=false, $formatvalues=fal
     		}
     		if ( is_array($value) ) {
       			foreach ($value as $column) {
-         			echo '<td class="v">',(strlen($column)>36?implode('&#8203;',str_split($column,35)):$column),'</td>';
+				echo '<td class="v">',(strlen($column)>50?implode('&#8203;',str_split($column,45)):$column),'</td>';         			
       			}
       			echo '</tr>';
     		}
