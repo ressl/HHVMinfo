@@ -3,9 +3,10 @@
 HHVMinfo - phpinfo page for HHVM HipHop Virtual Machine
 Author: _ck_
 License: WTFPL, free for any kind of use or modification,  I am not responsible for anything, please share your improvements
-Version: 0.0.3
+Version: 0.0.4
 
 * revision history
+0.0.4  2014-07-30  calculate uptime from pid (may not work in all environments), fixed meta links
 0.0.3  2014-07-29  display better interpretation of true, false, null and no value
 0.0.2  2014-07-28  first public release
 
@@ -70,8 +71,9 @@ print_table( array(
 	'PHP Version'=>phpversion(),
 	'HHVM Version'=>ini_get('hphp.compiler_version'),
 	'HHVM compiler id'=>ini_get('hphp.compiler_id'),
-	'Loaded Configuration File'=>php_ini_loaded_file(),
 	'SAPI'=>php_sapi_name().' '.ini_get('hhvm.server.type'),
+	'Loaded Configuration File'=>php_ini_loaded_file(),
+	'Uptime'=>($pid=ini_get('hhvm.pid_file'))&&($mtime=@filemtime($pid))?(new DateTime('@'.$mtime))->diff(new DateTime('NOW'))->format('%a days, %h hours, %i minutes'):'<i>unknown<i>',
 ));
 
 if ( isset($_GET['INI']) && $ini=ini_get_all() ) { 
@@ -105,8 +107,9 @@ if ( isset($_GET['GLOBALS']) ) {
 <div class="meta">
 	<a href="http://hhvm.com/blog">HHVM blog</a> | 
 	<a href="https://github.com/facebook/hhvm/wiki">HHVM wiki</a> | 
+	<a href="https://github.com/facebook/hhvm/blob/master/hphp/NEWS">HHVM changelog</a> | 		
 	<a href="https://github.com/facebook/hhvm/commits/master">HHVM commits</a> | 
-	<a href="https://github.com/facebook/hhvm/master/hphp/NEWS">HHVM changelog</a> | 		
+	<a href="http://webchat.freenode.net/?channels=hhvm">#HHVM irc chat</a> | 
 	<a href="https://gist.github.com/ck-on/67ca91f0310a695ceb65?hhvminfo.php">HHVMinfo latest</a>
 </div>
 
