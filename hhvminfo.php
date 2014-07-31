@@ -3,12 +3,20 @@
 HHVMinfo - phpinfo page for HHVM HipHop Virtual Machine
 Author: _ck_
 License: WTFPL, free for any kind of use or modification,  I am not responsible for anything, please share your improvements
-Version: 0.0.4
+Version: 0.0.5
 
 * revision history
+0.0.5  2014-07-31  try to determine config file from process command line (may not always work), style improvements
 0.0.4  2014-07-30  calculate uptime from pid (may not work in all environments), fixed meta links
 0.0.3  2014-07-29  display better interpretation of true, false, null and no value
 0.0.2  2014-07-28  first public release
+
+* known HHVM limitation as of 3.2
+- cannot use eval, preg_replace/e, or create_function in RepoAuthoritative  mode
+- cannot disable or reduce file stat frequency (without RepoAuthoritative mode)
+- cannot custom format error log or use catch_workers_output
+- cannot use phpinfo, php_ini_loaded_file, get_extension_funcs
+- https://github.com/facebook/hhvm/labels/php5%20incompatibility
 
 */
 ?><!DOCTYPE html>
@@ -44,6 +52,7 @@ Version: 0.0.4
 	.meta a, th a { padding: 10px; white-space:nowrap; }
 	.buttons { margin:0 0 1em; }
 	.buttons a { margin:0 15px; background-color: #9999cc; color:#fff; text-decoration:none; padding:1px; border:1px solid #000; display:inline-block; width:6em; text-align:center; box-shadow: 1px 2px 3px #ccc; }
+	.buttons a.active { background-color: #8888bb; box-shadow:none; }
 </style>
 </head>
 
@@ -54,27 +63,32 @@ Version: 0.0.4
 
 <div class="buttons">
         <a href="?INI&EXTENSIONS&FUNCTIONS&CONSTANTS&GLOBALS">ALL</a>
-        <a href="?INI">ini</a>
-        <a href="?EXTENSIONS">Extensions</a>
-        <a href="?FUNCTIONS">Functions</a>
-        <a href="?CONSTANTS">Constants</a>
-        <a href="?GLOBALS">Globals</a>
+        <a <?php echo isset($_GET['INI'])?'class="active"':'' ?>" href="?INI">ini</a>
+        <a <?php echo isset($_GET['EXTENSIONS'])?'class="active"':'' ?> href="?EXTENSIONS">Extensions</a>
+        <a <?php echo isset($_GET['FUNCTIONS'])?'class="active"':'' ?> href="?FUNCTIONS">Functions</a>
+        <a <?php echo isset($_GET['CONSTANTS'])?'class="active"':'' ?> href="?CONSTANTS">Constants</a>
+        <a <?php echo isset($_GET['GLOBALS'])?'class="active"':'' ?> href="?GLOBALS">Globals</a>
 </div>
 
 <?php 
 
-$defined_globals=array_keys( $GLOBALS );
+$globals=array_keys( $GLOBALS ); 
 
-print_table( array(
-	'Host'=>function_exists('gethostname')?@gethostname():@php_uname('n'),
-	'System'=>php_uname(),
-	'PHP Version'=>phpversion(),
-	'HHVM Version'=>ini_get('hphp.compiler_version'),
-	'HHVM compiler id'=>ini_get('hphp.compiler_id'),
-	'SAPI'=>php_sapi_name().' '.ini_get('hhvm.server.type'),
-	'Loaded Configuration File'=>php_ini_loaded_file(),
-	'Uptime'=>($pid=ini_get('hhvm.pid_file'))&&($mtime=@filemtime($pid))?(new DateTime('@'.$mtime))->diff(new DateTime('NOW'))->format('%a days, %h hours, %i minutes'):'<i>unknown<i>',
-));
+if ( empty($_GET)  || count($_GET)>4 || isset($_GET['SUMMARY']) ) {
+	$uptime=($pidfile=ini_get('hhvm.pid_file'))&&($mtime=@filemtime($pidfile))?(new DateTime('@'.$mtime))->diff(new DateTime('NOW'))->format('%a days, %h hours, %i minutes'):'<i>unknown<i>';
+	if ( !($inifile=(function_exists('php_ini_loaded_file')?php_ini_loaded_file():'')) && ($pid=@file_get_contents($pidfile)) 
+		&& ($cmdline=@file_get_contents("/proc/$pid/cmdline")) ) { $inifile=preg_match('@--config\s*([^ ]+?)($|\s|--)@',$cmdline,$match)?$match[1]:''; }
+	print_table( array(
+		'Host'=>function_exists('gethostname')?@gethostname():@php_uname('n'),
+		'System'=>php_uname(),
+		'PHP Version'=>phpversion(),
+		'HHVM Version'=>ini_get('hphp.compiler_version'),
+		'HHVM compiler id'=>ini_get('hphp.compiler_id'),
+		'SAPI'=>php_sapi_name().' '.ini_get('hhvm.server.type'),
+		'Loaded Configuration File'=>$inifile,
+		'Uptime'=>$uptime,
+	));
+}
 
 if ( isset($_GET['INI']) && $ini=ini_get_all() ) { 
   	ksort($ini); echo '<h2 id="ini">ini</h2>'; print_table($ini,array('Directive','Local Value','Master Value','Access'),false); 
@@ -92,14 +106,14 @@ if ( isset($_GET['FUNCTIONS']) && $functions=get_defined_functions() ) {
 }
 
 if ( isset($_GET['CONSTANTS']) && $constants=get_defined_constants(true) ) { 
-	ksort( $constants); foreach ( $constants as $key=>$value) { if (!empty($value)) { ksort( $value); echo '<h2>',$key,' Constants</h2>'; print_table($value); } } 
+	ksort( $constants); foreach ( $constants as $key=>$value) { if (!empty($value)) { ksort( $value); echo '<h2 id="constants-',$key,'">Constants (',$key,')</h2>'; print_table($value); } } 
 }
 
 if ( isset($_GET['GLOBALS']) ) { 
 	$order=array_flip(array('_SERVER','_ENV','_COOKIE','_GET','_POST','_REQUEST','_FILES'));
-	foreach ( $order as $key=>$ignore ) { if ( isset($GLOBALS[$key]) ) { echo '<h2 id="',$key,'">',$key,'</h2>';  if ( empty($GLOBALS[$key]) ) { echo '<hr>'; } else { print_table( $GLOBALS[$key]); } } }
-	$keys=$defined_globals; natcasesort( $keys); $keys=array_flip( $keys); unset( $keys['GLOBALS']); 
-	foreach ( $keys as $key=>$ignore ) { 	if ( !isset($order[$key]) ) { echo '<h2 id="',$key,'">',$key,'</h2>';  if ( empty($GLOBALS[$key]) ) { echo '<hr>'; } else { print_table( $GLOBALS[$key]); } } }
+	foreach ( $order as $key=>$ignore ) { if ( isset($GLOBALS[$key]) ) { echo '<h2 id="',$key,'">$',$key,'</h2>';  if ( empty($GLOBALS[$key]) ) { echo '<hr>'; } else { print_table( $GLOBALS[$key]); } } }
+	natcasesort($globals); $globals=array_flip($globals); unset( $globals['GLOBALS'] );  
+	foreach ( $globals as $key=>$ignore ) { if ( !isset($order[$key]) ) { echo '<h2 id="',$key,'">$',$key,'</h2>';  if ( empty($GLOBALS[$key]) ) { echo '<hr>'; } else { print_table( $GLOBALS[$key]); } } }
 }
 
 ?>
