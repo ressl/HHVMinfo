@@ -78,7 +78,7 @@ if ( empty($_GET)  || count($_GET)>4 || isset($_GET['SUMMARY']) ) {
 	if ( ($pidfile=ini_get('pid')) || ($pidfile=ini_get('hhvm.pid_file')) ) {
 		$uptime=($pidfile)&&($mtime=@filemtime($pidfile))?(new DateTime('@'.$mtime))->diff(new DateTime('NOW'))->format('%a days, %h hours, %i minutes'):'<i>unknown<i>';
 		if ( !($inifile=(function_exists('php_ini_loaded_file')?php_ini_loaded_file():'')) && ($pid=@file_get_contents($pidfile)) 
-			&& ($cmdline=@file_get_contents("/proc/$pid/cmdline")) ) { $inifile=preg_match('@--config\s*([^ ]+?)($|\s|--)@',$cmdline,$match)?$match[1]:''; }
+			&& ($cmdline=@file_get_contents("/proc/$pid/cmdline")) ) { $inifile=preg_match('@-?-c(onfig)?\s*([^ ]+?)($|\s|--)@',$cmdline,$match)?$match[2]:''; }
 	} else { $uptime=$inifile='<i>unknown</i>'; }
 	print_table( array(
 		'Host'=>function_exists('gethostname')?@gethostname():@php_uname('n'),
