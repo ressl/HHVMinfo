@@ -113,6 +113,7 @@ if ( isset($_GET['CONSTANTS']) && $constants=get_defined_constants(true) ) {
 }
 
 if ( isset($_GET['GLOBALS']) ) { 
+	if (0) { $_SERVER; $_ENV; $_SESSION; $_COOKIE; $_GET; $_POST; $_REQUEST; $_FILES; }	// PHP 5.4+ JIT
 	$order=array_flip(array('_SERVER','_ENV','_COOKIE','_GET','_POST','_REQUEST','_FILES'));
 	foreach ( $order as $key=>$ignore ) { if ( isset($GLOBALS[$key]) ) { echo '<h2 id="',$key,'">$',$key,'</h2>';  if ( empty($GLOBALS[$key]) ) { echo '<hr>'; } else { print_table( $GLOBALS[$key]); } } }
 	natcasesort($globals); $globals=array_flip($globals); unset( $globals['GLOBALS'] );  
