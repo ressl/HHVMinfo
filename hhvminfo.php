@@ -3,9 +3,10 @@
 HHVMinfo - phpinfo page for HHVM HipHop Virtual Machine
 Author: _ck_
 License: WTFPL, free for any kind of use or modification,  I am not responsible for anything, please share your improvements
-Version: 0.0.5
+Version: 0.0.6
 
 * revision history
+0.0.6  2014-08-02  display fix for empty vs zero 
 0.0.5  2014-07-31  try to determine config file from process command line (may not always work), style improvements
 0.0.4  2014-07-30  calculate uptime from pid (may not work in all environments), fixed meta links
 0.0.3  2014-07-29  display better interpretation of true, false, null and no value
@@ -137,7 +138,7 @@ function print_table( $array, $headers=false, $formatkeys=false, $formatnumeric=
 	if ( empty($array) || !is_array($array) ) { return; } 
   	echo '<table border="0" cellpadding="3">';
   	if ( !empty($headers) ) { 
-  		if (!is_array( $headers)) { $headers=array_keys(reset( $array)); }
+  		if ( !is_array( $headers) ) { $headers=array_keys( reset( $array) ); }
   		echo '<tr class="h">'; foreach ( $headers as $value) { echo '<th>',$value,'</th>'; } echo '</tr>';  			
   	}
   	foreach ( $array as $key=>$value ) { 
@@ -151,9 +152,12 @@ function print_table( $array, $headers=false, $formatkeys=false, $formatnumeric=
 }
 
 function format_special( $value, $formatnumeric ) { 
-    	if ( $value===true ) { $value='<i>true</i>'; }
+	if ( is_array($value) ) { $value='<i>array</i>'; }
+	elseif ( is_object($value) ) { $value='<i>object</i>'; }
+    	elseif ( $value===true ) { $value='<i>true</i>'; }
     	elseif ( $value===false ) { $value='<i>false</i>'; }
     	elseif ( $value===NULL ) { $value='<i>null</i>'; }
+    	elseif ( $value===0 || $value===0.0 || $value==='0' ) { $value='0'; }    	
     	elseif ( empty($value) ) { $value='<i>no value</i>'; }
 	elseif ( is_string($value) && strlen($value)>50 ) { $value=implode('&#8203;',str_split($value,45)); }
 	elseif ( $formatnumeric && is_numeric($value) ) { 
